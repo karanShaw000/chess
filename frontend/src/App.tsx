@@ -1,10 +1,11 @@
-import Board from "./components/Board";
+import Game from "./components/chess/Game";
 
 function App() {
-  return;
-  <>
-    <Board />
-  </>;
+  return (
+    <>
+      <Game />
+    </>
+  );
 }
 
 export default App;
