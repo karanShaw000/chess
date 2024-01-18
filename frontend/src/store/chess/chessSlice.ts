@@ -1,19 +1,21 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { Chess, Color, Square } from "chess.js";
 import sanitizePos from "../../utils/sanitize-pos";
+import { filterRedundantObject } from "@/utils/filter-redundant-object";
 
 const FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-// const FEN =
-//   "r3k2r/ppp2ppp/2nq1n2/2bQPb2/2B1pB2/2N2N2/PPP2PPP/R3K2R w KQkq - 0 1";
+// const FEN = "rnbqkbnr/ppp1pppp/8/7P/8/8/PPPP2p1/RNBQKBNR b KQkq - 0 5";
 export type ChessInitialStateType = {
   fen: string;
+  turn: Color;
   availableMoves: MoveType[];
   check: CheckType;
   endingGame: {
     endedBy: "checkmate" | "stalemate" | "";
     color?: Color | "";
   };
+  showPromoMove: MoveType | "";
 };
 
 type CheckType = {
@@ -24,6 +26,7 @@ type CheckType = {
 type MovePayloadType = {
   from: Square;
   to: string;
+  promotion: "Q" | "B" | "R" | "N" | "q" | "b" | "r" | "n" | "";
 };
 
 type MovesPayloadType = {
@@ -31,13 +34,16 @@ type MovesPayloadType = {
   piece: string;
 };
 
-type MoveType = {
+export type MoveType = {
   from: Square; //san: Kg4, Nf6, etc
   to: string; //basically co-oridnates of chess
+  promoOptions: ["Q", "B", "R", "N"] | ["q", "b", "r", "n"] | [];
 };
 
 const initialState: ChessInitialStateType = {
   fen: FEN,
+  showPromoMove: "",
+  turn: "w",
   availableMoves: [],
   check: {
     isCheck: false,
@@ -55,7 +61,6 @@ const chessSlice = createSlice({
     moves: (state, { payload }: { payload: MovesPayloadType }) => {
       const chess = new Chess(state.fen);
       const sanArray = chess.moves({ square: payload.from });
-      console.log(sanArray);
       const arr: Array<MoveType> = [];
       sanArray.map((san) => {
         //SAN is Standard Algrebaric Notation for chess where a move can be describe
@@ -63,25 +68,55 @@ const chessSlice = createSlice({
           //This logic is for castling when we get payload.piece to be BLACK KING
           if (san === "O-O") {
             //(O-O: KING'S SIDE CASTLE)
-            arr.push({ from: payload.from, to: "g8" });
+            arr.push({ from: payload.from, to: "g8", promoOptions: [] });
           }
           if (san === "O-O-O") {
             //(O-O-O: QUEEN'S SIDE CASTLE)
-            arr.push({ from: payload.from, to: "c8" });
+            arr.push({ from: payload.from, to: "c8", promoOptions: [] });
           }
-          arr.push({ from: payload.from, to: sanitizePos(san) });
+          arr.push({
+            from: payload.from,
+            to: sanitizePos(san),
+            promoOptions: [],
+          });
         } else if (payload.piece === "K") {
           //This logic is for castling when we get payload.piece to be WHITE KING
           if (san === "O-O") {
-            arr.push({ from: payload.from, to: "g1" });
+            arr.push({ from: payload.from, to: "g1", promoOptions: [] });
           }
           if (san === "O-O-O") {
-            arr.push({ from: payload.from, to: "c1" });
+            arr.push({ from: payload.from, to: "c1", promoOptions: [] });
           }
-          arr.push({ from: payload.from, to: sanitizePos(san) });
-        } else arr.push({ from: payload.from, to: sanitizePos(san) });
+          arr.push({
+            from: payload.from,
+            to: sanitizePos(san),
+            promoOptions: [],
+          });
+        } else if (san.includes("=")) {
+          if (payload.piece === "p") {
+            arr.push({
+              from: payload.from,
+              to: sanitizePos(san),
+              promoOptions: ["q", "b", "r", "n"],
+            });
+          }
+          if (payload.piece === "P") {
+            arr.push({
+              from: payload.from,
+              to: sanitizePos(san),
+              promoOptions: ["Q", "B", "R", "N"],
+            });
+          }
+        } else
+          arr.push({
+            from: payload.from,
+            to: sanitizePos(san),
+            promoOptions: [],
+          });
       });
-      state.availableMoves = arr;
+      console.log(sanArray);
+      console.log(arr);
+      state.availableMoves = filterRedundantObject(arr);
     },
 
     resetAvailableMoves: (state) => {
@@ -91,8 +126,13 @@ const chessSlice = createSlice({
     move: (state, { payload }: { payload: MovePayloadType }) => {
       const chess = new Chess(state.fen);
 
-      chess.move({ from: payload.from, to: payload.to });
+      chess.move({
+        from: payload.from,
+        to: payload.to,
+        promotion: payload.promotion.toLowerCase(),
+      });
       state.fen = chess.fen();
+      state.turn = chess.turn();
       state.availableMoves = [];
     },
 
@@ -127,6 +167,7 @@ const chessSlice = createSlice({
       const chess = new Chess(state.fen);
       chess.reset();
       state.fen = chess.fen();
+      state.turn = "w";
       state.availableMoves = [];
       state.check = {
         isCheck: false,
@@ -135,6 +176,14 @@ const chessSlice = createSlice({
       state.endingGame = {
         endedBy: "",
       };
+    },
+
+    promoMove: (state, { payload }: { payload: MoveType }) => {
+      state.showPromoMove = payload;
+    },
+
+    resetPromoMove: (state) => {
+      state.showPromoMove = "";
     },
   },
 });
@@ -145,5 +194,7 @@ export const {
   isCheck,
   isGameOver,
   resetGame,
+  promoMove,
+  resetPromoMove,
 } = chessSlice.actions;
 export default chessSlice.reducer;

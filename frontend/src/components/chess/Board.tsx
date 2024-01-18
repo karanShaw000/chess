@@ -6,8 +6,9 @@ import { useEffect, useState } from "react";
 import createBoard from "../../utils/create-board";
 import { useDispatch } from "react-redux";
 import { isCheck, isGameOver, resetGame } from "../../store/chess/chessSlice";
-import ChessModal from "./ChessModal";
+import ChessModal from "./ui/ChessModal";
 import { RefreshCcw } from "lucide-react";
+import PromotionPawnPopOver from "./ui/PromotionPawnPopOver";
 
 // interface BoardProps {
 //   board: CellType[];
@@ -18,25 +19,40 @@ const Board = () => {
   const endingGame = useSelector(
     (state: RootState) => state.chessGame.endingGame
   );
+  const showPromoMove = useSelector(
+    (state: RootState) => state.chessGame.showPromoMove
+  );
+
   const dispatch = useDispatch();
-  const [board, setBoard] = useState(createBoard(fen));
+  const [board, setBoard] = useState(createBoard(fen, "b"));
 
   useEffect(() => {
     console.log(fen, "<<<<<<FEN>>>>>");
     dispatch(isGameOver());
-    if (endingGame.endedBy === "checkmate") {
-      console.log(endingGame.endedBy);
-      console.log(`${endingGame.color} wins`);
-    } else if (endingGame.endedBy === "stalemate") {
-      console.log(endingGame.endedBy);
-    } else {
-      setBoard(createBoard(fen));
-    }
+    // if (endingGame.endedBy === "checkmate") {
+    //   console.log(endingGame.endedBy);
+    //   console.log(`${endingGame.color} wins`);
+    // } else if (endingGame.endedBy === "stalemate") {
+    //   console.log(endingGame.endedBy);
+    // } else {
+    //   setBoard(createBoard(fen));
+    // }
+    setBoard(createBoard(fen, "b"));
     dispatch(isCheck());
   }, [fen, dispatch, endingGame]);
 
   return (
-    <div>
+    <div className="relative">
+      {showPromoMove !== "" && (
+        <div className="absolute bottom-[15%] left-0 ">
+          <PromotionPawnPopOver
+            show={true}
+            promoOption={showPromoMove.promoOptions}
+            to={showPromoMove.to}
+            from={showPromoMove.from}
+          />
+        </div>
+      )}
       {endingGame.endedBy === "checkmate" && (
         <ChessModal
           pngSrc={`${

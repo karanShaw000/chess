@@ -11,7 +11,7 @@ import Board from "./Board";
 
 const Game = () => {
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-4xl mx-auto">
       <Board />
     </div>
   );

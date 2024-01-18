@@ -28,12 +28,17 @@ const Cell = ({ index, cell }: CellProps) => {
 
   return (
     <div className={`${isLight ? light : dark} relative`}>
-      {/* <p className="absolute top-0 left-0">{cell.pos}</p> */}
+      <p className="absolute top-0 left-0">{cell.pos}</p>
       {availableMoves.map((moveObj, index) => {
         //sanitize pos logic should be written in reducer and add more logic to casting + check
         if (moveObj.to === cell.pos) {
           return (
-            <AvailablePiece key={index} from={moveObj.from} to={moveObj.to} />
+            <AvailablePiece
+              key={index}
+              from={moveObj.from}
+              to={moveObj.to}
+              promoOptions={moveObj.promoOptions}
+            />
           );
         }
       })}

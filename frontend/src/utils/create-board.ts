@@ -1,4 +1,4 @@
-import { Square, SQUARES as positions } from "chess.js";
+import { Color, Square, SQUARES as positions } from "chess.js";
 export type CellType = {
   pos: Square;
   piece: string;
@@ -8,7 +8,7 @@ export type CellType = {
 const range = (n: number) =>
   Array.from({ length: n }, (_, index) => `${index + 1}`);
 
-export default function createBoard(fen: string) {
+export default function createBoard(fen: string, color: Color) {
   const fenString = fen.split(" ")[0];
   const fenPieces = fenString.split("/").join("");
 
@@ -28,5 +28,6 @@ export default function createBoard(fen: string) {
     board.push({ pos: positions[index], piece: piece as string })
   );
 
-  return board;
+  if (color === "w") return board;
+  else return board.reverse();
 }

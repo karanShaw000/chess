@@ -1,5 +1,5 @@
 import { Dialog, DialogFooter, DialogContent } from "@/components/ui/dialog";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { resetGame } from "@/store/chess/chessSlice";
